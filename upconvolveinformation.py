@@ -19,20 +19,19 @@ class UpConvolve(object):
             conv_layers (int):          The number of up/down convolution layers in the architecture.
 
         """
-        self.stride_row = stride[0]
-        self.stride_col = stride[1]
+        self.stride_y = stride[0]
+        self.stride_x = stride[1]
 
         self.kernel_size_x = kernel_size[0]
         self.kernel_size_y = kernel_size[1]
 
-        self.pad_row = self.kernel_size_x - 1
-        self.pad_col = self.kernel_size_y - 1
+        self.window_size_x = window_size[0]
+        self.window_size_y = window_size[1]
 
         self.kernel = np.ones((self.kernel_size_x, self.kernel_size_y))
-        self.window_size = window_size
         self.conv_layers = conv_layers
 
-    def generate_weights(self, convolution_levels):
+    def generate_weights(self):
         """
         Produces a 2D array for the given kernel size, stride and number of upconvolution layers
         Args:
@@ -42,12 +41,11 @@ class UpConvolve(object):
             information_heatmap (numpy.array): A 2D numpy array whose entries denote the 'information' of each output pixel
 
         """
-        current_arr = np.ones((self.kernel_size_y, self.kernel_size_x))
+        x, y = self.calc_lowest_level_dim()
 
-        if convolution_levels == 1:
-            return current_arr
+        current_arr = np.ones((y, x))
 
-        for i in range(convolution_levels - 1):
+        for i in range(self.conv_layers):
             current_arr = self.gen_next_level_weights(current_arr)
 
         return current_arr
@@ -63,8 +61,8 @@ class UpConvolve(object):
 
         """
         prev_num_rows, prev_num_cols = previous_level_weights.shape
-        new_num_cols = prev_num_cols * self.stride_col + (self.kernel_size_x - self.stride_col)
-        new_num_rows = prev_num_rows * self.stride_row + (self.kernel_size_y - self.stride_row)
+        new_num_cols = prev_num_cols * self.stride_x + (self.kernel_size_x - self.stride_x)
+        new_num_rows = prev_num_rows * self.stride_y + (self.kernel_size_y - self.stride_y)
 
         #Want to dilate this layer, use row-major format
         next_level = np.zeros((new_num_rows, new_num_cols))
@@ -73,7 +71,7 @@ class UpConvolve(object):
             for col in range(prev_num_cols):
                 for i in range(self.kernel_size_x):
                     for j in range(self.kernel_size_y):
-                        next_level[row * self.stride_row + i][col * self.stride_col + j] += previous_level_weights[row][col]
+                        next_level[row * self.stride_y + i][col * self.stride_x + j] += previous_level_weights[row][col]
 
         return next_level
 
@@ -85,10 +83,33 @@ class UpConvolve(object):
         """
         scipy.misc.imsave(filename, array)
 
+    def calc_lowest_level_dim(self):
+        """
+        Calculates the dimensions of the lowest level in the network using the input image dimensions, stride, kernel size and number of
+        up/down convolutional layers
+        Returns:
+            lowest_layer_dims ([int, int]): The size of the 2D image at the lowest level of the network.
+        """
+        current_x = self.window_size_x
+        current_y = self.window_size_y
+        step_x = self.kernel_size_x - self.stride_x
+        step_y = self.kernel_size_y - self.stride_y
+
+        for _ in range(self.conv_layers):
+            current_x = (current_x - step_x) / self.stride_x
+            current_y = (current_y - step_y) / self.stride_y
+
+        return int(current_x), int(current_y)
+
     def test(self):
+        """
         intensities = self.generate_weights(5)
         self.write_to_im(intensities, "intensities.png")
+        """
+        im = self.generate_weights()
+        filename = "intensities" + str(self.window_size_x) + "x" + str(self.window_size_y) + ".png"
+        self.write_to_im(im, filename)
 
 if __name__=="__main__":
-    upconv = UpConvolve([2,2],[4,4])
+    upconv = UpConvolve([2,2],[4,4], [94,94], 5)
     upconv.test()
