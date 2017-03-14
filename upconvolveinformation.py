@@ -101,6 +101,44 @@ class UpConvolve(object):
 
         return int(current_x), int(current_y)
 
+    def find_central_window_dimensions(self):
+        """
+        In the centre of the weight matrix will be a rectangle with maximum valued entries, the dimensions of this rectangle will be
+        found and returned
+        Args:
+            weight_matrix (numpy.array): A 2D numpy array whose entries denote the 'information' of each input pixel
+        Returns:
+            dims ([int, int]): The size of the 2D rectangle in the centre of the weight matrix with maximal value ([x, y])
+        """
+        weight_matrix = self.generate_weights()
+
+        height, width = weight_matrix.shape
+        centre_x = int(width / 2)
+        centre_y = int(height / 2)
+        max_val = weight_matrix[centre_y][centre_x]
+
+        startx, stopx = 0, 0
+
+        for i in range(width):
+            if weight_matrix[centre_y][i] == max_val:
+                startx = i
+                for j in range(i, width):
+                    if weight_matrix[centre_y][j] < max_val:
+                        stopx = j
+                        break
+                break
+
+        for i in range(height):
+            if weight_matrix[i][centre_y] == max_val:
+                starty = i
+                for j in range(i, width):
+                    if weight_matrix[centre_y][j] < max_val:
+                        stopy = j
+                        break
+                break
+
+        return [stopx - startx, stopy - starty]
+
     def test(self):
         """
         intensities = self.generate_weights(5)
@@ -110,6 +148,51 @@ class UpConvolve(object):
         filename = "intensities" + str(self.window_size_x) + "x" + str(self.window_size_y) + ".png"
         self.write_to_im(im, filename)
 
+class DataProvider(object):
+    def __init__(self):
+        self.height = 510
+        self.width = 510
+
+    def partition_indices(self, step, partition_size):
+        """
+        Takes an input array size and partitions this up into possibly overlapping windows
+        Args:
+            step ([int, int]): A 2D array denoting the step size in the x, y directions
+            size ([int, int]): A 2D array denoting the partition window size in the x, y directions
+
+        Returns:
+            partition_indices ([[int, int], [int, int]]): A list of start and end indices for each partition
+        """
+
+        partition_indices = []
+        current_x, current_y = 0, 0
+        while current_y < self.height:
+            while current_x < self.width:
+                if current_x + step[0] < self.width:
+                    startx, stopx = current_x, current_x + partition_size[0]
+                else:
+                    startx, stopx = self.width - partition_size[0], self.width
+                if current_y + step[1] < self.height:
+                    starty, stopy = current_y, current_y + partition_size[1]
+                else:
+                    starty, stopy = self.height - partition_size[1], self.height
+
+                partition_indices.append([[startx, stopx], [starty, stopy]])
+                current_x += step[0]
+
+            current_x = 0
+            current_y += step[1]
+
+        return partition_indices
+
+    def partition(self, stride, kernel_size, window_size, num_conv_layers):
+        upconv = UpConvolve(stride, kernel_size, window_size, num_conv_layers)
+        step = upconv.find_central_window_dimensions()
+        return self.partition_indices(step, window_size)
+
+
 if __name__=="__main__":
-    upconv = UpConvolve([2,2],[4,4], [94,94], 5)
-    upconv.test()
+    #upconv = UpConvolve([2,2],[4,4], [94,94], 5)
+    #upconv.test()
+    dataProv = DataProvider()
+    dataProv.partition([2,2], [4,4], [94,94], 5)
