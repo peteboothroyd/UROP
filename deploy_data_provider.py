@@ -11,9 +11,9 @@ from upconvolveinformation import UpConvolve
 
 join = os.path.join
 
-class DataLayer(caffe.Layer):
+class DeployDataLayer(caffe.Layer):
     def setup(self, bottom, top):
-        if len(top) != 1:
+        if len(topde) != 1:
             raise ValueError('DataLayer should have 1 outputs for deployment.')
 
         random.seed()
@@ -27,9 +27,7 @@ class DataLayer(caffe.Layer):
         params = json.loads(self.param_str)
         self.batch_size = params['batch_size']
         self.image_path = params['image_path']
-        self.label_path = params['label_path']
         self.image_list = params['image_list']
-        self.label_list = params['label_list']
         self.height = params['height']
         self.width = params['width']
 
@@ -46,6 +44,11 @@ class DataLayer(caffe.Layer):
         except:
             print("Problem loading image with path: " + impath)
 
+        print("Set up DeployDataLayer: ")
+        print("batch size = " + str(self.batch_size))
+        print("image path = " + str(self.image_path))
+        print("image shape = " + str(self.image_shape))
+
     def reshape(self, bottom, top):
         top[0].reshape(self.batch_size, self.channels, self.height, self.width)
 
@@ -53,6 +56,12 @@ class DataLayer(caffe.Layer):
         top[0].data[...] = 0
 
         partition_indices = self.partition(self.stride, self.kernel_size, self.image_shape, self.num_conv_levels)
+
+        file = open("./output/deploy_output/info.txt", "w+")
+        file.write(str(self.batch_size) + "\n")
+        file.write(str(len(partition_indices)) + "\n")
+        file.write(str(partition_indices) + "\n")
+
 
         for i in range(self.batch_size):
             while True:
@@ -71,13 +80,20 @@ class DataLayer(caffe.Layer):
                     starty, stopy = partition_indices[j][0][0], partition_indices[j][0][1]
                     im = im[startx:stopx, starty:stopy, :]
 
-                    imio.imsave("./output/deploy_output/{0}_image_x{1}_y{2}.png".format(j, startx, starty), im)
+                    file_path = "./output/deploy_output/{0}_image_x{1}_y{2}.png".format(j, startx, starty)
+                    imio.imsave(file_path, im)
+
+                    file.write(file_path)
 
                     im = im.transpose(2, 0, 1).astype(np.float32)
 
                     top[0].data[i, ...] = im
 
+                file.write("\n")
+
                 break
+
+        file.close()
 
     def backward(self, bottom, top):
         raise NotImplemented
@@ -119,8 +135,3 @@ class DataLayer(caffe.Layer):
         step = upconv.find_central_window_dimensions()
         return self.partition_indices(step, window_size)
 
-def test():
-    pass
-
-if __name__ == "__main__":
-  test()
