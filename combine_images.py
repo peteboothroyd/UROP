@@ -8,3 +8,4 @@ class combine(object):
         info_file.close()
 
     def combine_outputs(self):
+        pass

@@ -1,6 +1,7 @@
 import caffe
 import numpy as np
 import skimage.io as imio
+import ast
 
 class DeployOutputLayer(caffe.Layer):
     """
@@ -40,14 +41,13 @@ class DeployOutputLayer(caffe.Layer):
             try:
                 info_file = open("./output/deploy_output/info.txt", "r")
                 self.batch_size = info_file.readline()
-                self.num_partitions_per_image = info_file.readline()
-                partition_indices_string = info_file.readline()
-                self.partition_indices = partition_indices_string.split()
+                self.num_partitions_per_image = ast.literal_eval(info_file.readline())
+                self.partition_indices = ast.literal_eval(info_file.readline())
                 info_file.close()
 
                 print("batch size = " + str(self.batch_size))
-                print("number of partitions per image = " + str(self.num_partitions_per_image))
-                print("partition indices = " + str(partition_indices_string))
+                print("number of partitions per image = " + str(self.num_partitions_per_image) + str(type(self.num_partitions_per_image)))
+                print("type of partition indices = " + str(type(self.partition_indices)))
 
                 self.opened_info_file = True
             except IOError:
@@ -62,9 +62,22 @@ class DeployOutputLayer(caffe.Layer):
         to_save[:, :, 1] = prob
         to_save[:, :, 2] = prob
 
-        current_partition_number = self.test_sample % self.num_partitions_per_image
-        indices_string = self.partition_indices[current_partition_number]
+        current_partition_number = int(self.test_sample / self.num_partitions_per_image)
+        startx, starty = self.partition_indices[current_partition_number][0][0], self.partition_indices[current_partition_number][1][0]
+        print("Current partition number = " + str(current_partition_number))
+        print("Startx: " + str(startx) + ". Starty: " + str(starty))
 
-        #TODO: Change the file naming
-        imio.imsave("./output/deploy_output/{0}_output.png".format(self.test_sample), to_save)
+        imio.imsave("./output/deploy_output/{0}_output{1}_y{2}.png".format(self.test_sample, startx, starty), to_save)
         self.test_sample += 1
+        print("Sample number: " + str(self.test_sample))
+
+    def sigmoid(self, x):
+        """Numerically-stable sigmoid function."""
+        ret = np.zeros_like(x)
+        idx = x >= 0
+        z = np.exp(-x[idx])
+        ret[idx] = 1 / (1 + z)
+        idx = x < 0
+        z = np.exp(x[idx])
+        ret[idx] = z / (1 + z)
+        return ret
