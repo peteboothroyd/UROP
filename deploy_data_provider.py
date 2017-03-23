@@ -32,6 +32,7 @@ class DeployDataLayer(caffe.Layer):
         self.width = params['width']
 
         self.test_sample = 0
+        self.num_caffe_requested_iter = 0
 
         with open(self.image_list, 'r') as fid:
             self.im_files = [join(self.image_path,f.strip()) for f in fid.readlines()]
@@ -94,7 +95,7 @@ class DeployDataLayer(caffe.Layer):
                     #print("Output image path: " + output_cropped_im_path)
                     imio.imsave(output_cropped_im_path, cropped_im)
 
-                    file.write(output_cropped_im_path + " ")
+                    #file.write(output_cropped_im_path + " ")
 
                     cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
 
