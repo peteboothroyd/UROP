@@ -13,8 +13,8 @@ join = os.path.join
 
 class DeployDataLayer(caffe.Layer):
     def setup(self, bottom, top):
-        if len(top) != 1:
-            raise ValueError('DataLayer should have 1 outputs for deployment.')
+        if len(top) != 2:
+            raise ValueError('DataLayer should have 2 outputs for deployment. Image and label data.')
 
         random.seed()
 
@@ -22,52 +22,81 @@ class DeployDataLayer(caffe.Layer):
         self.channels = 3
         self.stride = [2, 2]
         self.kernel_size = [4, 4]
+
+        #This is the number of up/down convolve layers in the architecture which determines the image dimensions
         self.num_conv_levels = 5
 
         params = json.loads(self.param_str)
-        self.batch_size = params['batch_size']
-        self.image_path = params['image_path']
-        self.image_list = params['image_list']
-        self.height = params['height']
-        self.width = params['width']
+
+        try:
+            self.batch_size = params['batch_size']
+            self.image_path = params['image_path']
+            self.label_path = params['label_path']
+            self.image_list = params['image_list']
+            self.partition_height = params['height']
+            self.partition_width = params['width']
+        except KeyError:
+            print("Problem getting parameters from the data layer. Check that all the required parameters are supplied")
+
+        #TODO: Check that this path is correct relative to the directory containing the python file
+        self.output_path = "./output/deploy_output/"
+        self.info_file_path = self.output_path + "info.txt"
 
         self.test_sample = 0
-        self.num_caffe_requested_iter = 0
 
         with open(self.image_list, 'r') as fid:
-            self.im_files = [join(self.image_path,f.strip()) for f in fid.readlines()]
+            self.im_files = [join(self.image_path, f.strip()) for f in fid.readlines()]
+
+        with open(self.label_list, 'r') as fid:
+            self.gt_files = [join(self.label_path, f.strip()) for f in fid.readlines()]
 
         self.n_files = len(self.im_files)
 
+        if self.n_files != len(self.gt_files):
+            raise ValueError('Number of images and labels differ!')
+
         try:
+            print("im_files[0] = " + str(self.im_files[0]))
+            #TODO: Is this necessary? (Joining impath to relative path, has this already been done in line 37?)
             impath = join(self.image_path, self.im_files[0])
+            print("impath = " + str(impath))
+
             im = imio.imread(impath)
-            image_height, image_width, _ = im.shape
-            self.image_width, self.image_height = image_width, image_height
-            print("Set up DeployDataLayer: ")
-            print("batch size = " + str(self.batch_size))
-            print("image path = " + str(self.image_path))
-            print("image shape = " + str([self.image_width, self.image_height]))
+            self.image_width, self.image_height, _ = im.shape
         except:
             print("Problem loading image with path: " + impath)
 
-        self.partition_indices = self.partition(self.stride, self.kernel_size, [self.width, self.height], self.num_conv_levels)
-        self.num_partitions_per_image = len(self.partition_indices)
+        print("Set up DeployDataLayer: ")
+        print("image shape = " + str([self.image_width, self.image_height]))
+
+        try:
+            file = open(self.info_file_path, "w+")
+
+            self.upConv = UpConvolve(self.stride, self.kernel_size, [self.partition_width, self.partition_height], [self.image_width, self.image_height], self.num_conv_levels)
+            self.partition_indices = self.upConv.partition()
+            self.num_partitions_per_image = len(self.partition_indices)
+
+            #Store information which can be used later in the output layer
+            file.write("Number of partitions per image = " + str(len(self.partition_indices)) + "\n")
+            file.write("Image size = " + str([self.image_width, self.image_height]))
+
+            file.close()
+        except:
+            print("Problem loading info file with path: " + self.info_file_path)
+
 
     def reshape(self, bottom, top):
-        top[0].reshape(self.batch_size, self.channels, self.height, self.width)
+        top[0].reshape(self.batch_size, self.channels, self.partition_height, self.partition_width)
+        top[1].reshape(self.batch_size, 1, self.partition_height, self.partition_width)
 
     def forward(self, bottom, top):
         top[0].data[...] = 0
+        top[1].data[...] = 0
 
         try:
-            filepath = "./output/deploy_output/info.txt"
-            file = open(filepath, "w+")
-            file.write(str(self.batch_size) + "\n")
-            file.write(str(len(self.partition_indices)) + "\n")
-            file.write(str(self.partition_indices) + "\n")
-        except IOError:
-            print("Problem opening file: " + filepath)
+            file = open(self.info_file_path, "w+")
+        except:
+            print("Problem loading info file with path: " + self.info_file_path)
 
         for i in range(self.batch_size):
             while True:
@@ -75,8 +104,9 @@ class DeployDataLayer(caffe.Layer):
                     r = random.randrange(0, self.n_files)
                     try:
                         impath = join(self.image_path, self.im_files[r])
+                        labelpath = join(self.label_path, self.gt_files[r])
                         im = imio.imread(impath)
-                        #print("im_shape: " + str(im.shape))
+                        label = imio.imread(labelpath).astype(np.int32)
                     except:
                         print("Problem loading image with path: " + impath)
                     else:
@@ -85,64 +115,29 @@ class DeployDataLayer(caffe.Layer):
                 for j in range(len(self.partition_indices)):
                     startx, stopx = self.partition_indices[j][0][0], self.partition_indices[j][0][1]
                     starty, stopy = self.partition_indices[j][1][0], self.partition_indices[j][1][1]
-                    #print("Startx: " + str(startx) + ". Stopx: " + str(stopx) +". Starty: " + str(starty) +". Stopy: " + str(stopy))
 
                     cropped_im = im[starty:stopy, startx:stopx, :]
-                    #print("im_shape after cropping: " + str(cropped_im.shape))
+                    cropped_label = label[starty:stopy, startx:stopx, :]
+
+                    cropped_label = np.sum(label, axis=2)
+                    cropped_label[cropped_label != 0] = 1
 
                     image_num = int(self.test_sample / self.num_partitions_per_image)
-                    output_cropped_im_path = "./output/deploy_output/{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
-                    #print("Output image path: " + output_cropped_im_path)
-                    imio.imsave(output_cropped_im_path, cropped_im)
+                    output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
+                    output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
 
-                    #file.write(output_cropped_im_path + " ")
+                    imio.imsave(output_cropped_im_path, cropped_im)
+                    imio.imsave(output_cropped_label_path, cropped_label)
+
+                    file.write(output_cropped_im_path + " ")
 
                     cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
 
                     top[0].data[i, ...] = cropped_im
+                    top[1].data[i, ...] = cropped_label
                     self.test_sample += 1
 
                 file.write("\n")
                 break
 
         file.close()
-
-    def partition_indices(self, step, partition_size):
-            """
-            Takes an input array size and partitions this up into possibly overlapping windows. Note the window size is
-            found from the self.height and self.width properties.
-            Args:
-                step ([int, int]): A 2D array denoting the step size in the x, y directions
-                partition_size ([int, int]): A 2D array denoting the partition window size in the x, y directions
-
-            Returns:
-                partition_indices ([[int, int], [int, int]]): A list of start and end indices for each partition
-            """
-
-            partition_indices = []
-            current_x, current_y = 0, 0
-            while current_y < self.image_height:
-                while current_x < self.image_width:
-                    if current_x + partition_size[0] < self.image_width:
-                        startx, stopx = current_x, current_x + partition_size[0]
-                    else:
-                        startx, stopx = self.image_width - partition_size[0], self.image_width
-                        current_x = self.image_width
-                    if current_y + partition_size[1] < self.image_height:
-                        starty, stopy = current_y, current_y + partition_size[1]
-                    else:
-                        starty, stopy = self.image_height - partition_size[1], self.image_height
-
-                    partition_indices.append([[startx, stopx], [starty, stopy]])
-                    current_x += step[0]
-
-                current_x = 0
-                current_y += step[1]
-            #print("Partition indices:" + str(partition_indices))
-            return partition_indices
-
-    def partition(self, stride, kernel_size, partition_size, num_conv_layers):
-        upconv = UpConvolve(stride, kernel_size, partition_size, num_conv_layers)
-        step = upconv.find_central_window_dimensions()
-        return self.partition_indices(step, partition_size)
-

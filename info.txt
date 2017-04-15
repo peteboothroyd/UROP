@@ -1,0 +1,2 @@
+Number of partitions per image = 10000
+Image size = [94, 96]

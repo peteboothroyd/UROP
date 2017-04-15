@@ -8,34 +8,34 @@ class UpConvolve(object):
         automatically generated padded pixels which leads to relatively worse performance towards the edge of the output.
         This is aimed at 2D input data.
     """
-    def __init__(self, stride, kernel_size, window_size, conv_layers):
+    def __init__(self, stride, kernel_size, partition_size, image_size, n_conv_layers):
         """
         Args:
-            stride ([int, int]):        List of strings with 2 elements; [stride in the x-direction, stride in the y-direction].
-                                        Note normally both these values will be equal.
-            kernel_size ([int, int]):   The kernel size for downsampling [x-size, y-size].
-                                        Note normally both these values will be equal.
-            window_size ([int, int]):   The window size which we are considering (eg. 510x510px).
-            conv_layers (int):          The number of up/down convolution layers in the architecture.
+            stride ([int, int]):        List of ints with 2 elements; [x-stride, y-stride]. Note normally both these values will be equal.
+            kernel_size ([int, int]):   The kernel size for downsampling [x-size, y-size]. Note normally both these values will be equal.
+            partition_size ([int, int]):The partition size which we are considering (eg. 94x94px).
+            image_size ([int, int]):    The size of the overall image which we are partitioning up. [im-x-size, im-y-size]
+            n_conv_layers (int):        The number of up/down convolution layers in the architecture.
 
         """
-        self.stride_y = stride[0]
-        self.stride_x = stride[1]
+        self.stride_x = stride[0]
+        self.stride_y = stride[1]
 
         self.kernel_size_x = kernel_size[0]
         self.kernel_size_y = kernel_size[1]
 
-        self.window_size_x = window_size[0]
-        self.window_size_y = window_size[1]
+        self.partition_size_x = partition_size[0]
+        self.partition_size_y = partition_size[1]
 
-        self.kernel = np.ones((self.kernel_size_x, self.kernel_size_y))
-        self.conv_layers = conv_layers
+        self.im_size_x = image_size[0]
+        self.im_size_y = image_size[1]
+
+        self.kernel = np.ones((self.kernel_size_y, self.kernel_size_x))
+        self.conv_layers = n_conv_layers
 
     def generate_weights(self):
         """
         Produces a 2D array for the given kernel size, stride and number of upconvolution layers
-        Args:
-            convolution_levels (int): The number of levels of upconvolution in the deep learning network.
 
         Returns:
             information_heatmap (numpy.array): A 2D numpy array whose entries denote the 'information' of each output pixel
@@ -52,7 +52,7 @@ class UpConvolve(object):
 
     def gen_next_level_weights(self, previous_level_weights):
         """
-        Recursive method which generates the next level of 'information' weights based upon the previous level
+        Method which generates the next level of 'information' weights based upon the previous level
         Args:
             previous_level_weights (numpy.array): A 2D numpy array whose entries denote the 'information' of each input pixel
 
@@ -90,8 +90,9 @@ class UpConvolve(object):
         Returns:
             lowest_layer_dims ([int, int]): The size of the 2D image at the lowest level of the network.
         """
-        current_x = self.window_size_x
-        current_y = self.window_size_y
+        current_x = self.partition_size_x_size_x
+        current_y = self.partition_size_y
+
         step_x = self.kernel_size_x - self.stride_x
         step_y = self.kernel_size_y - self.stride_y
 
@@ -105,8 +106,7 @@ class UpConvolve(object):
         """
         In the centre of the weight matrix will be a rectangle with maximum valued entries, the dimensions of this rectangle will be
         found and returned
-        Args:
-            weight_matrix (numpy.array): A 2D numpy array whose entries denote the 'information' of each input pixel
+
         Returns:
             dims ([int, int]): The size of the 2D rectangle in the centre of the weight matrix with maximal value ([x, y])
         """
@@ -139,61 +139,53 @@ class UpConvolve(object):
 
         return [stopx - startx, stopy - starty]
 
+    def partition(self):
+        """
+            Takes an input array size and partitions this up into possibly overlapping windows.
+            Args:
+                step ([int, int]):          A 2D array denoting the step size in the x, y directions, ie the offset each partition
+                                            has in the x-y direction from other partitions [x_step, y_step]
+
+            Returns:
+                partition_indices ([[int, int], [int, int]]): A list of start and end indices for each partition
+            """
+        step = self.find_central_window_dimensions()
+
+        partition_indices = []
+
+        current_x, current_y = 0, 0
+        image_width, image_height = self.im_size_x, self.im_size_y
+        partition_width, partition_height = self.partition_size_x, self.partition_size_y
+
+        while current_y < image_height:
+            while current_x < image_width:
+                if current_x + partition_width < image_width:
+                    startx, stopx = current_x, current_x + partition_width
+                else:
+                    startx, stopx = image_width - partition_width, image_width
+                    current_x = image_width
+                if current_y + partition_height < image_height:
+                    starty, stopy = current_y, current_y + partition_height
+                else:
+                    starty, stopy = image_width - partition_height, image_height
+
+                partition_indices.append([[startx, stopx], [starty, stopy]])
+                current_x += step[0]
+
+            current_x = 0
+            current_y += step[1]
+
+        return partition_indices
+
     def test(self):
         """
         intensities = self.generate_weights(5)
         self.write_to_im(intensities, "intensities.png")
         """
         im = self.generate_weights()
-        filename = "intensities" + str(self.window_size_x) + "x" + str(self.window_size_y) + ".png"
+        filename = "intensities" + str(self.partition_size_x) + "x" + str(self.partition_size_y) + ".png"
         self.write_to_im(im, filename)
 '''
-class DataProvider(object):
-    def __init__(self):
-        self.image_height = 568
-        self.image_width = 768
-
-    def partition_indices(self, step, partition_size):
-            """
-            Takes an input array size and partitions this up into possibly overlapping windows. Note the window size is
-            found from the self.height and self.width properties.
-            Args:
-                step ([int, int]): A 2D array denoting the step size in the x, y directions
-                partition_size ([int, int]): A 2D array denoting the partition window size in the x, y directions
-
-            Returns:
-                partition_indices ([[int, int], [int, int]]): A list of start and end indices for each partition
-            """
-
-            partition_indices = []
-            current_x, current_y = 0, 0
-            while current_y < self.image_height:
-                while current_x < self.image_width:
-                    if current_x + partition_size[0] < self.image_width:
-                        startx, stopx = current_x, current_x + partition_size[0]
-                    else:
-                        startx, stopx = self.image_width - partition_size[0], self.image_width
-                        current_x = self.image_width
-                    if current_y + partition_size[1] < self.image_height:
-                        starty, stopy = current_y, current_y + partition_size[1]
-                    else:
-                        starty, stopy = self.image_height - partition_size[1], self.image_height
-
-                    partition_indices.append([[startx, stopx], [starty, stopy]])
-                    current_x += step[0]
-
-                current_x = 0
-                current_y += step[1]
-            #print("Partition indices:" + str(partition_indices))
-            return partition_indices
-
-    def partition(self, stride, kernel_size, partition_size, num_conv_layers):
-        upconv = UpConvolve(stride, kernel_size, partition_size, num_conv_layers)
-        step = upconv.find_central_window_dimensions()
-        print("Central dimensions: " + str(step))
-        return self.partition_indices(step, partition_size)
-
-
 if __name__=="__main__":
     #upconv = UpConvolve([2,2],[4,4], [94,94], 5)
     #upconv.test()
