@@ -6,6 +6,7 @@ import json
 import skimage.io as imio
 import skimage.transform as imtf
 import random
+import IO
 
 from upconvolveinformation import UpConvolve
 
@@ -55,35 +56,17 @@ class DeployDataLayer(caffe.Layer):
         if self.n_files != len(self.gt_files):
             raise ValueError('Number of images and labels differ!')
 
-        try:
-            print("im_files[0] = " + str(self.im_files[0]))
-            #TODO: Is this necessary? (Joining impath to relative path, has this already been done in line 37?)
-            impath = join(self.image_path, self.im_files[0])
-            print("impath = " + str(impath))
+        impath = self.im_files[0][0]
+        self.image_width, self.image_height, _ = IO.find_partition_dim(impath)
 
-            im = imio.imread(impath)
-            self.image_width, self.image_height, _ = im.shape
-        except:
-            print("Problem loading image with path: " + impath)
+        self.upConv = UpConvolve(self.stride, self.kernel_size, [self.partition_width, self.partition_height], [self.image_width, self.image_height], self.num_conv_levels)
+        self.partition_indices = self.upConv.partition()
+        self.num_partitions_per_image = len(self.partition_indices)
 
-        print("Set up DeployDataLayer: ")
+        IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height])
+
+        print("Set up DeployDataLayer.")
         print("image shape = " + str([self.image_width, self.image_height]))
-
-        try:
-            file = open(self.info_file_path, "w+")
-
-            self.upConv = UpConvolve(self.stride, self.kernel_size, [self.partition_width, self.partition_height], [self.image_width, self.image_height], self.num_conv_levels)
-            self.partition_indices = self.upConv.partition()
-            self.num_partitions_per_image = len(self.partition_indices)
-
-            #Store information which can be used later in the output layer
-            file.write("Number of partitions per image = " + str(len(self.partition_indices)) + "\n")
-            file.write("Image size = " + str([self.image_width, self.image_height]))
-
-            file.close()
-        except:
-            print("Problem loading info file with path: " + self.info_file_path)
-
 
     def reshape(self, bottom, top):
         top[0].reshape(self.batch_size, self.channels, self.partition_height, self.partition_width)
@@ -103,8 +86,8 @@ class DeployDataLayer(caffe.Layer):
                 while True:
                     r = random.randrange(0, self.n_files)
                     try:
-                        impath = join(self.image_path, self.im_files[r])
-                        labelpath = join(self.label_path, self.gt_files[r])
+                        impath = self.im_files[r]
+                        labelpath = self.gt_files[r]
                         im = imio.imread(impath)
                         label = imio.imread(labelpath).astype(np.int32)
                     except:
