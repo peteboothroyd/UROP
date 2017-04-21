@@ -19,6 +19,10 @@ class DeployDataLayer(caffe.Layer):
 
         random.seed()
 
+        #TODO: Check that this path is correct relative to the directory containing the python file
+        self.output_path = "./output/deploy_output/"
+        self.info_file_path = self.output_path + "info.txt"
+
         # NOTE(fixme, dirty)
         self.channels = 3
         self.stride = [2, 2]
@@ -38,10 +42,6 @@ class DeployDataLayer(caffe.Layer):
             self.partition_width = params['width']
         except KeyError:
             print("Problem getting parameters from the data layer. Check that all the required parameters are supplied")
-
-        #TODO: Check that this path is correct relative to the directory containing the python file
-        self.output_path = "./output/deploy_output/"
-        self.info_file_path = self.output_path + "info.txt"
 
         self.test_sample = 0
 
