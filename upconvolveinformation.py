@@ -90,7 +90,7 @@ class UpConvolve(object):
         Returns:
             lowest_layer_dims ([int, int]): The size of the 2D image at the lowest level of the network.
         """
-        current_x = self.partition_size_x_size_x
+        current_x = self.partition_size_x
         current_y = self.partition_size_y
 
         step_x = self.kernel_size_x - self.stride_x
