@@ -33,21 +33,17 @@ class DeployDataLayer(caffe.Layer):
 
         params = json.loads(self.param_str)
 
-        print("Params = " + str(params))
-        self.batch_size = params['batch_size']
-        self.image_path = params['image_path']
-        self.label_path = params['label_path']
-        self.image_list = params['image_list']
-        self.label_list = params['label_list']
-        self.partition_height = params['height']
-        self.partition_width = params['width']
-        
-        '''
         try:
-
+            self.batch_size = params['batch_size']
+            self.image_path = params['image_path']
+            self.label_path = params['label_path']
+            self.image_list = params['image_list']
+            self.label_list = params['label_list']
+            self.partition_height = params['height']
+            self.partition_width = params['width']
         except KeyError:
             print("Problem getting parameters from the data layer. Check that all the required parameters are supplied")
-        '''
+
         self.test_sample = 0
 
         with open(self.image_list, 'r') as fid:
@@ -61,9 +57,10 @@ class DeployDataLayer(caffe.Layer):
         if self.n_files != len(self.gt_files):
             raise ValueError('Number of images and labels differ!')
 
-        print(self.im_files)
+        #print(self.im_files)
 
         impath = self.im_files[0][0]
+        print("impath = " + str(impath))
         self.image_width, self.image_height, _ = IO.find_partition_dim(impath)
 
         self.upConv = UpConvolve(self.stride, self.kernel_size, [self.partition_width, self.partition_height], [self.image_width, self.image_height], self.num_conv_levels)
