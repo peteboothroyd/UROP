@@ -58,7 +58,7 @@ class DeployDataLayer(caffe.Layer):
             raise ValueError('Number of images and labels differ!')
 
         #print(self.im_files)
-
+        print("Type = " + str(type(self.imfiles)) + ". length = "+ str(len(self.im_files)))
         impath = self.im_files[0][0]
         print("impath = " + str(impath))
         self.image_width, self.image_height, _ = IO.find_partition_dim(impath)
