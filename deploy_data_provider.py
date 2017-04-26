@@ -33,18 +33,21 @@ class DeployDataLayer(caffe.Layer):
 
         params = json.loads(self.param_str)
 
+        print("Params = " + str(params))
+        self.batch_size = params['batch_size']
+        self.image_path = params['image_path']
+        self.label_path = params['label_path']
+        self.image_list = params['image_list']
+        self.label_list = params['label_list']
+        self.partition_height = params['height']
+        self.partition_width = params['width']
+        
+        '''
         try:
-            print("Params = " + str(params))
-            self.batch_size = params['batch_size']
-            self.image_path = params['image_path']
-            self.label_path = params['label_path']
-            self.image_list = params['image_list']
-            self.label_list = params['label_list']
-            self.partition_height = params['height']
-            self.partition_width = params['width']
+
         except KeyError:
             print("Problem getting parameters from the data layer. Check that all the required parameters are supplied")
-
+        '''
         self.test_sample = 0
 
         with open(self.image_list, 'r') as fid:
