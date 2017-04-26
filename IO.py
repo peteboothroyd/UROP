@@ -29,12 +29,12 @@ def read_info_file(path):
         r = re.findall(image_size_pattern, image_size_line_raw)
         image_dim = [int(r[0][0]), int(r[0][1])]
 
-        output_im_files = [f.split() for f in info_file.readlines()]
+        im_coords = [f.split() for f in info_file.readlines()]
         info_file.close()
 
         print("number of partitions per image = " + str(num_partitions_per_image) + str(type(num_partitions_per_image)))
 
-        return num_partitions_per_image, image_dim, output_im_files
+        return num_partitions_per_image, image_dim, im_coords
 
     except IOError:
         print("Could not open info file. Check that it has been created at the path= " + path)

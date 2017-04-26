@@ -48,6 +48,12 @@ class DeployOutputLayer(caffe.Layer):
         top[0].reshape(1)  # Classification error
 
     def forward(self, bottom, top):
+        if not self.opened_info_file:
+            info = IO.read_info_file(self.info_file_path)
+
+            self.num_partitions_per_image, self.image_dim ,self.im_coords = info[0], info[1], info[2]
+            self.opened_info_file = True
+
         current_im_num = int(self.test_sample / self.num_partitions_per_image)
         partition_num = self.test_sample - current_im_num * self.num_partitions_per_image
         print("Image number = " + str(current_im_num) + ". Current partition number = " + str(partition_num))
@@ -69,12 +75,6 @@ class DeployOutputLayer(caffe.Layer):
         top[0].data[...] = cerr
         self.cumulative_im_cerr += cerr
 
-        if not self.opened_info_file:
-            info = IO.read_info_file(self.info_file_path)
-
-            self.num_partitions_per_image, self.image_dim ,self.im_files = info[0], info[1], info[2]
-            self.opened_info_file = True
-
         to_save = np.zeros((self.height, self.width, 3), dtype=np.float32)
 
         to_save[:, :, 0] = prob
@@ -82,12 +82,12 @@ class DeployOutputLayer(caffe.Layer):
         to_save[:, :, 2] = prob
 
         im_path = self.im_files[current_im_num][partition_num]
-        image_pattern = r"./output/deploy_output/(?P<image_num>\d+)_image_x(?P<x_offset>\d+)_y(?P<x_offset>\d+).png"
+        image_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+).png"
         r = re.findall(image_pattern, im_path)
-        image_num, x_off, y_off = r[0][0], r[0][1], r[0][2]
+        x_off, y_off = r[0][0], r[0][1]
 
-        label_path = self.output_path + "{0}_output_x{1}_y{2}.png".format(image_num, x_off, y_off)
-        imio.imsave(label_path, to_save)
+        #label_path = self.output_path + "{0}_output_x{1}_y{2}.png".format(image_num, x_off, y_off)
+        #imio.imsave(label_path, to_save)
 
         self.test_sample += 1
 
