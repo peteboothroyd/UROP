@@ -142,9 +142,6 @@ class UpConvolve(object):
     def partition(self):
         """
             Takes an input array size and partitions this up into possibly overlapping windows.
-            Args:
-                step ([int, int]):          A 2D array denoting the step size in the x, y directions, ie the offset each partition
-                                            has in the x-y direction from other partitions [x_step, y_step]
 
             Returns:
                 partition_indices ([[int, int], [int, int]]): A list of start and end indices for each partition

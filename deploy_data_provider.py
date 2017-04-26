@@ -107,8 +107,8 @@ class DeployDataLayer(caffe.Layer):
                     startx, stopx = self.partition_indices[j][0][0], self.partition_indices[j][0][1]
                     starty, stopy = self.partition_indices[j][1][0], self.partition_indices[j][1][1]
 
-                    cropped_im = im[starty:stopy, startx:stopx, :]
-                    cropped_label = label[starty:stopy, startx:stopx, :]
+                    cropped_im = im[startx:stopx, starty:stopy, :]
+                    cropped_label = label[startx:stopx, starty:stopy, :]
                     cropped_label = np.sum(cropped_label, axis=2)
                     cropped_label[cropped_label != 0] = 1
 
