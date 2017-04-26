@@ -57,11 +57,17 @@ class DeployDataLayer(caffe.Layer):
         if self.n_files != len(self.gt_files):
             raise ValueError('Number of images and labels differ!')
 
-        #print(self.im_files)
-        print("Type = " + str(type(self.im_files)) + ". length = "+ str(len(self.im_files)))
-        impath = self.im_files[0][0]
-        print("impath = " + str(impath))
-        self.image_width, self.image_height, _ = IO.find_partition_dim(impath)
+        while True:
+            print("Type = " + str(type(self.im_files)) + ". length = " + str(len(self.im_files)) + ". type of first element = " + str(type(self.im_files[0]))\
+                + ". length of first item = " + str(len(self.im_files[0])))
+            r = random.randrange(0, self.n_files)
+            try:
+                impath = self.im_files[r]
+                self.image_width, self.image_height, _ = IO.find_partition_dim(impath)
+            except:
+                print("Problem loading image with path: " + impath)
+            else:
+                break
 
         self.upConv = UpConvolve(self.stride, self.kernel_size, [self.partition_width, self.partition_height], [self.image_width, self.image_height], self.num_conv_levels)
         self.partition_indices = self.upConv.partition()
