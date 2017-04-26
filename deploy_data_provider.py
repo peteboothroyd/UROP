@@ -34,10 +34,12 @@ class DeployDataLayer(caffe.Layer):
         params = json.loads(self.param_str)
 
         try:
+            print("Params = " + str(params))
             self.batch_size = params['batch_size']
             self.image_path = params['image_path']
             self.label_path = params['label_path']
             self.image_list = params['image_list']
+            self.label_list = params['label_list']
             self.partition_height = params['height']
             self.partition_width = params['width']
         except KeyError:
