@@ -58,8 +58,6 @@ class DeployDataLayer(caffe.Layer):
             raise ValueError('Number of images and labels differ!')
 
         while True:
-            print("Type = " + str(type(self.im_files)) + ". length = " + str(len(self.im_files)) + ". type of first element = " + str(type(self.im_files[0]))\
-                + ". length of first item = " + str(len(self.im_files[0])))
             r = random.randrange(0, self.n_files)
             try:
                 impath = self.im_files[r]
@@ -111,18 +109,18 @@ class DeployDataLayer(caffe.Layer):
 
                     cropped_im = im[starty:stopy, startx:stopx, :]
                     cropped_label = label[starty:stopy, startx:stopx, :]
-
-                    cropped_label = np.sum(label, axis=2)
+                    cropped_label = np.sum(cropped_label, axis=2)
                     cropped_label[cropped_label != 0] = 1
 
                     image_num = int(self.test_sample / self.num_partitions_per_image)
-                    output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
-                    output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
+                    #output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
+                    #output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
+                    image_coords = "{0}_label_x{1}_y{2}".format(image_num, startx, starty)
 
-                    imio.imsave(output_cropped_im_path, cropped_im)
-                    imio.imsave(output_cropped_label_path, cropped_label)
+                    #imio.imsave(output_cropped_im_path, cropped_im)
+                    #imio.imsave(output_cropped_label_path, cropped_label)
 
-                    file.write(output_cropped_im_path + " ")
+                    file.write(image_coords + " ")
 
                     cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
 
