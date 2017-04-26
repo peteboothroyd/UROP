@@ -164,7 +164,7 @@ class UpConvolve(object):
                 if current_y + partition_height < image_height:
                     starty, stopy = current_y, current_y + partition_height
                 else:
-                    starty, stopy = image_width - partition_height, image_height
+                    starty, stopy = image_height - partition_height, image_height
 
                 partition_indices.append([[startx, stopx], [starty, stopy]])
                 current_x += step[0]
