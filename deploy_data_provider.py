@@ -19,7 +19,7 @@ class DeployDataLayer(caffe.Layer):
 
         random.seed()
 
-        #TODO: Check that this path is correct relative to the directory containing the python file
+        #TODO: Check that this path is correct relative to the directory where the code is called from
         self.output_path = "./output/deploy_output/"
         self.info_file_path = self.output_path + "info.txt"
 
@@ -55,6 +55,8 @@ class DeployDataLayer(caffe.Layer):
 
         if self.n_files != len(self.gt_files):
             raise ValueError('Number of images and labels differ!')
+
+        print(self.im_files)
 
         impath = self.im_files[0][0]
         self.image_width, self.image_height, _ = IO.find_partition_dim(impath)
