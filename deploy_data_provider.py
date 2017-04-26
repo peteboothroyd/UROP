@@ -72,7 +72,6 @@ class DeployDataLayer(caffe.Layer):
         self.num_partitions_per_image = len(self.partition_indices)
 
         IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height])
-        assert False
 
         print("Set up DeployDataLayer.")
         print("image shape = " + str([self.image_width, self.image_height]))
