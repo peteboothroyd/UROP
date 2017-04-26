@@ -86,7 +86,7 @@ class DeployDataLayer(caffe.Layer):
         top[1].data[...] = 0
 
         try:
-            file = open(self.info_file_path, "w+")
+            file = open(self.info_file_path, "a")
         except:
             print("Problem loading info file with path: " + self.info_file_path)
 
