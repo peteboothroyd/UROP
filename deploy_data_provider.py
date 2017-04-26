@@ -116,7 +116,7 @@ class DeployDataLayer(caffe.Layer):
                     image_num = int(self.test_sample / self.num_partitions_per_image)
                     #output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
                     #output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
-                    image_coords = "x{1}_y{2}".format(startx, starty)
+                    image_coords = "x{0}_y{1}".format(startx, starty)
 
                     #imio.imsave(output_cropped_im_path, cropped_im)
                     #imio.imsave(output_cropped_label_path, cropped_label)
