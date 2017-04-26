@@ -107,10 +107,11 @@ class DeployDataLayer(caffe.Layer):
                     startx, stopx = self.partition_indices[j][0][0], self.partition_indices[j][0][1]
                     starty, stopy = self.partition_indices[j][1][0], self.partition_indices[j][1][1]
 
-                    print("x1 = " + str(startx) + "\t" +"x2 = " + str(stopx) + "\t" + "y1 = " + str(starty) + "\t" +"y2 = " + str(stopy) + "\t")
-                    assert (stopx - startx) == self.partition_width and (stopy - starty) == self.partition_height, "IMAGE DIMENSIONS ARE NOT CORRECT"
-                    cropped_im = im[startx:stopx, starty:stopy, :]
-                    cropped_label = label[startx:stopx, starty:stopy, :]
+                    print("x1 = " + str(startx) + "\t\t" +"x2 = " + str(stopx) + "\t\t" + "y1 = " + str(starty) + "\t\t" +"y2 = " + str(stopy) + "\t")
+                    assert (stopx - startx) == self.partition_width and (stopy - starty) == self.partition_height, "IMAGE DIMENSIONS ARE NOT CORRECT" + \
+                                                                                                                   str(stopx - startx) +", " +str(stopy - starty)
+                    cropped_im = im[starty:stopy, startx:stopx, :]
+                    cropped_label = label[starty:stopy, startx:stopx, :]
                     cropped_label = np.sum(cropped_label, axis=2)
                     cropped_label[cropped_label != 0] = 1
 
