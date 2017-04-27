@@ -99,7 +99,8 @@ class DeployDataLayer(caffe.Layer):
                         labelpath = self.gt_files[r]
                         im = imio.imread(impath)
                         label = imio.imread(labelpath).astype(np.int32)
-                    except:
+                    except Exception as e:
+                        print(e)
                         print("Problem loading image with path: " + impath)
                     else:
                         break
