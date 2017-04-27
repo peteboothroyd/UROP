@@ -75,10 +75,10 @@ def create_info_file(path, num_partitions, image_dim, stride, kernel_size, num_c
     try:
         info_file = open(path, "w+")
         info_file.write("Number of partitions per image = " + str(num_partitions) + "\n")
-        info_file.write("Image size = " + str(image_dim))
-        info_file.write("Stride = " + str(stride))
-        info_file.write("Kernel size = " + str(kernel_size))
-        info_file.write("Convolution levels = " + str(num_conv_levels))
+        info_file.write("Image size = " + str(image_dim) + "\n")
+        info_file.write("Stride = " + str(stride) + "\n")
+        info_file.write("Kernel size = " + str(kernel_size) + "\n")
+        info_file.write("Convolution levels = " + str(num_conv_levels) + "\n")
         info_file.close()
 
         print("Created image file at path: " + path)
