@@ -72,7 +72,7 @@ class DeployDataLayer(caffe.Layer):
         self.partition_indices = self.upConv.partition()
         self.num_partitions_per_image = len(self.partition_indices)
 
-        IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height])
+        IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels)
 
         print("Set up DeployDataLayer.")
         print("image shape = " + str([self.image_width, self.image_height]))
