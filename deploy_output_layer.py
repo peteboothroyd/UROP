@@ -60,8 +60,19 @@ class DeployOutputLayer(caffe.Layer):
             combined_output_path = self.output_path + "{0}_combined_output.png".format(self.im_num)
             combined_label_path = self.output_path + "{0}_combined_label.png".format(self.im_num)
 
+            output_to_save = np.zeros((self.image_dim[1], self.image_dim[0], 3), dtype=np.float32)
+            print(output_to_save.shape)
+            output_to_save[:,:,0] = self.combined_output
+            output_to_save[:,:,1] = self.combined_output
+            output_to_save[:,:,2] = self.combined_output
             imio.imsave(combined_output_path, self.combined_output)
-            imio.imsave(combined_label_path, self.combined_label)
+
+            label_to_save = np.zeros((self.image_dim[1], self.image_dim[0], 3), dtype=np.float32)
+            print(label_to_save.shape)
+            label_to_save[:,:,0] = self.combined_label
+            label_to_save[:,:,1] = self.combined_label
+            label_to_save[:,:,2] = self.combined_label
+            imio.imsave(combined_label_path, label_to_save)
 
             cerr = np.sum(((self.combined_output > self.thresh) != (self.combined_label > self.thresh)))
             print("Cerr for merged im " + str(self.im_num) + " = " + str(cerr))
