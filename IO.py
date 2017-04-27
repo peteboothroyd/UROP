@@ -84,7 +84,7 @@ def create_info_file(path, num_partitions, image_dim, stride, kernel_size, num_c
         print("Created image file at path: " + path)
     except:
         print("Problem loading info file with path: " + path)
-'''
+
 def find_partition_dim(path):
     try:
         #print("im_files[0] = " + str(self.im_files[0]))
@@ -96,4 +96,3 @@ def find_partition_dim(path):
         return im.shape
     except:
         print("Problem loading image with path: " + path)
-'''
