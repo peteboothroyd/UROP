@@ -108,9 +108,9 @@ class DeployDataLayer(caffe.Layer):
                     cropped_im = im[starty:stopy, startx:stopx, :]
                     cropped_label = label[starty:stopy, startx:stopx, :]
 
-                    if image_num <= 1:
-                        output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
-                        output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
+                    if image_num <= 0:
+                        output_cropped_im_path = self.output_path + "{0}_x{1}_y{2}_image.png".format(image_num, startx, starty)
+                        output_cropped_label_path = self.output_path + "{0}_x{1}_y{2}_label.png".format(image_num, startx, starty)
                         imio.imsave(output_cropped_im_path, cropped_im)
                         imio.imsave(output_cropped_label_path, cropped_label)
 

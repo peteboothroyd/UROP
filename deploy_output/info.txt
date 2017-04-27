@@ -1,0 +1,6 @@
+Number of partitions per image = 25
+Image size = [768, 576]
+Stride = [2, 2]
+Kernel size = [4, 4]
+Convolution levels = 5
+x0_y0 x130_y0 x260_y0 x390_y0 x514_y0 x0_y130 x130_y130 x260_y130 x390_y130 x514_y130 x0_y260 x130_y260 x260_y260 x390_y260 x514_y260 x0_y322 x130_y322 x260_y322 x390_y322 x514_y322 x0_y322 x130_y322 x260_y322 x390_y322 x514_y322 
