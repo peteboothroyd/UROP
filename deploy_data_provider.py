@@ -110,11 +110,11 @@ class DeployDataLayer(caffe.Layer):
                     cropped_label = np.sum(cropped_label, axis=2)
                     cropped_label[cropped_label != 0] = 1
 
-                    output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
-                    output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
-
-                    imio.imsave(output_cropped_im_path, cropped_im)
-                    imio.imsave(output_cropped_label_path, cropped_label)
+                    if image_num <= 1:
+                        output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
+                        output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
+                        imio.imsave(output_cropped_im_path, cropped_im)
+                        imio.imsave(output_cropped_label_path, cropped_label)
 
                     cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
 
