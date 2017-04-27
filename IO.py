@@ -63,7 +63,7 @@ def read_info_file(path):
     except IOError:
         print("Could not open info file. Check that it has been created at the path= " + path)
 
-def create_info_file(path, num_partitions, image_dim, stride, kernel_size, num_conv_levels):
+def create_info_file(path, num_partitions, image_dim, stride, kernel_size, num_conv_levels, partition_indices):
     """
     Store relevant information which can be used later in the output layer.
 
@@ -79,6 +79,11 @@ def create_info_file(path, num_partitions, image_dim, stride, kernel_size, num_c
         info_file.write("Stride = " + str(stride) + "\n")
         info_file.write("Kernel size = " + str(kernel_size) + "\n")
         info_file.write("Convolution levels = " + str(num_conv_levels) + "\n")
+        for j in range(len(partition_indices)):
+            startx, stopx = partition_indices[j][0][0], partition_indices[j][0][1]
+            starty, stopy = partition_indices[j][1][0], partition_indices[j][1][1]
+            image_coords = "x{0}_y{1}".format(startx, starty)
+            info_file.write(image_coords + " ")
         info_file.close()
 
         print("Created image file at path: " + path)

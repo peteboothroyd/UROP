@@ -69,7 +69,7 @@ class DeployDataLayer(caffe.Layer):
         self.partition_indices = self.upConv.partition()
         self.num_partitions_per_image = len(self.partition_indices)
 
-        IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels)
+        IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels, self.partition_indices)
 
         print("Set up DeployDataLayer.")
         print("image shape(height, width) = " + str([self.image_height, self.image_width]))
@@ -82,11 +82,6 @@ class DeployDataLayer(caffe.Layer):
         top[0].data[...] = 0
         top[1].data[...] = 0
 
-        try:
-            file = open(self.info_file_path, "a")
-        except:
-            print("Problem loading info file with path: " + self.info_file_path)
-
         for i in range(self.batch_size):
             while True:
                 while True:
@@ -96,6 +91,9 @@ class DeployDataLayer(caffe.Layer):
                         labelpath = self.gt_files[r]
                         im = imio.imread(impath)
                         label = imio.imread(labelpath).astype(np.int32)
+                        image_num = int(self.test_sample / self.num_partitions_per_image)
+                        imio.imsave("./output/deploy_output/target_image{}".format(image_num), im)
+                        imio.imsave("./output/deploy_output/target_label{}".format(image_num), label)
                     except Exception as e:
                         print(e)
                         print("Problem loading image with path: " + impath)
@@ -111,15 +109,11 @@ class DeployDataLayer(caffe.Layer):
                     cropped_label = np.sum(cropped_label, axis=2)
                     cropped_label[cropped_label != 0] = 1
 
-                    image_num = int(self.test_sample / self.num_partitions_per_image)
                     #output_cropped_im_path = self.output_path + "{0}_image_x{1}_y{2}.png".format(image_num, startx, starty)
                     #output_cropped_label_path = self.output_path + "{0}_label_x{1}_y{2}.png".format(image_num, startx, starty)
-                    image_coords = "x{0}_y{1}".format(startx, starty)
 
                     #imio.imsave(output_cropped_im_path, cropped_im)
                     #imio.imsave(output_cropped_label_path, cropped_label)
-
-                    file.write(image_coords + " ")
 
                     cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
 
@@ -127,7 +121,4 @@ class DeployDataLayer(caffe.Layer):
                     top[1].data[i, ...] = cropped_label
                     self.test_sample += 1
 
-                file.write("\n")
                 break
-
-        file.close()
