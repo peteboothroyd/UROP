@@ -56,9 +56,6 @@ class DeployOutputLayer(caffe.Layer):
         partition_num = self.test_sample - current_im_num * self.num_partitions_per_image
         print("Image number = " + str(current_im_num) + ". Current partition number = " + str(partition_num))
 
-        #TODO: Delete this
-        assert current_im_num <= 0, "1 test image processed..."
-
         if current_im_num > self.im_num: #Have just transitioned to be looking at the next overall image, save
             combined_output_path = self.output_path + "{0}_combined_output.png".format(self.im_num)
             combined_label_path = self.output_path + "{0}_combined_label.png".format(self.im_num)
@@ -83,6 +80,9 @@ class DeployOutputLayer(caffe.Layer):
             self.im_num = current_im_num
             self.combined_output = np.zeros((self.image_dim[1], self.image_dim[0]))
             self.combined_label = np.zeros((self.image_dim[1], self.image_dim[0]))
+
+        #TODO: Delete this
+        assert current_im_num <= 0, "1 test image processed..."
 
         prob = self.sigmoid(bottom[0].data)
         label = bottom[1].data

@@ -111,6 +111,7 @@ class UpConvolve(object):
             dims ([int, int]): The size of the 2D rectangle in the centre of the weight matrix with maximal value ([x, y])
         """
         weight_matrix = self.generate_weights()
+        self.write_to_im(weight_matrix, "weights.png")
 
         height, width = weight_matrix.shape
         centre_x = int(width / 2)
@@ -136,6 +137,7 @@ class UpConvolve(object):
                         stopy = j
                         break
                 break
+        print("x1 = " + str(startx) + ". x2 = " + str(stopx) + ". y1 = " + str(starty) + ". y2 = " + str(stopy))
 
         return [stopx - startx, stopy - starty]
 
