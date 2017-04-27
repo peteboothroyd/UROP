@@ -117,7 +117,9 @@ class DeployOutputLayer(caffe.Layer):
         self.opened_info_file = True
         upConvolve = UpConvolve(self.stride, self.kernel_size, [self.width, self.height], self.image_dim, self.num_conv_levels)
         self.weights = upConvolve.generate_weights()
+        upConvolve.write_to_im(self.weights, "weights.png")
         self.normalising_array = self.calc_normalising_array(self.weights)
+        upConvolve.write_to_im(self.normalising_array, "normalising_array.png")
 
     def calc_normalising_array(self, weights):
         """
@@ -139,8 +141,8 @@ class DeployOutputLayer(caffe.Layer):
             x_off, y_off = int(r[0][0]), int(r[0][1])
             #Need to add numpy array to a smaller numpy array, with an offset given by the x_of and y_off. Note we want to apply some
             #function to each pixel, we do no necessarily think that this relationship is linear
-            for x in range(self.image_dim[0]):
-                for y in range(self.image_dim[1]):
+            for x in range(self.image_dim[0] - 1):
+                for y in range(self.image_dim[1] - 1):
                     normalising_weights[y + y_off][x + x_off] += self.element_function(weights[y][x])
 
         return normalising_weights
