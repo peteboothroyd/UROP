@@ -96,9 +96,9 @@ class DeployOutputLayer(caffe.Layer):
         #print("label dim = " + str(label.shape))
 
         prob_to_save = np.zeros((self.height, self.width, 3), dtype=np.float32)
-        output_to_save[:,:,0] = prob_to_save
-        output_to_save[:,:,1] = prob_to_save
-        output_to_save[:,:,2] = prob_to_save
+        prob_to_save[:,:,0] = prob
+        prob_to_save[:,:,1] = prob
+        prob_to_save[:,:,2] = prob
         imio.imsave(self.output_path + "{0}_output_x{1}_y{2}.png".format(current_im_num, x_off, y_off), prob_to_save)
 
         for x in range(self.width):
