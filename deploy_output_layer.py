@@ -76,7 +76,7 @@ class DeployOutputLayer(caffe.Layer):
         im_coords = self.im_coords[partition_num]
         coord_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
         r = re.findall(coord_pattern, im_coords)
-        x_off, y_off = r[0][0], r[0][1]
+        x_off, y_off = int(r[0][0]), int(r[0][1])
 
         for x in range(self.image_dim[0]):
             for y in range(self.image_dim[1]):
