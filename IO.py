@@ -50,14 +50,14 @@ def read_info_file(path):
 
         im_coords = info_file.readline().split()
         info_file.close()
-
+        ''' ##DEBUG##
         #print("number of partitions per image = " + str(num_partitions_per_image) + str(type(num_partitions_per_image)))
         print("image size = " + str(image_dim))
         print("image coords = " + str(im_coords) + ". length = " + str(len(im_coords)))
         print("stride size = " + str(stride))
         print("kernel size = " + str(kernel_size))
         print("number convolutional levels = " + str(n_conv_levels))
-
+        '''
         return num_partitions_per_image, image_dim, im_coords, stride, kernel_size, n_conv_levels
 
     except IOError:
