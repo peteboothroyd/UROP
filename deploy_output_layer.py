@@ -132,7 +132,8 @@ class DeployOutputLayer(caffe.Layer):
             normalising_weights (numpy.array): A 2D numpy array whose entries denote the normalising value of each output pixel
 
         """
-        normalising_weights = np.zeros(self.image_dim)
+        normalising_weights = np.zeros((self.image_dim[1], self.image_dim[0]))
+        print(normalising_weights.shape)
 
         for i in range(len(self.im_coords)):
             image_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
