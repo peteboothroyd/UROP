@@ -29,12 +29,11 @@ class DeployOutputLayer(caffe.Layer):
         self.height = params['height']
         self.test_sample = 0
 
-        self.im_num = -1
+        self.im_num = 0
 
         self.output_path = "./output/deploy_output/"
         self.info_file_path = self.output_path + "info.txt"
 
-        self.opened_info_file = False
         print("Set up DeployOutputLayer: ")
 
     def reshape(self, bottom, top):
@@ -48,8 +47,10 @@ class DeployOutputLayer(caffe.Layer):
         top[0].reshape(1)  # Classification error
 
     def forward(self, bottom, top):
-        if not self.opened_info_file:
+        if self.test_sample == 0:
             self.read_from_info_file()
+            self.combined_output = np.zeros((self.image_dim[1], self.image_dim[0]))
+            self.combined_label = np.zeros((self.image_dim[1], self.image_dim[0]))
 
         current_im_num = int(self.test_sample / self.num_partitions_per_image)
         partition_num = self.test_sample - current_im_num * self.num_partitions_per_image
@@ -65,8 +66,6 @@ class DeployOutputLayer(caffe.Layer):
             cerr = np.sum(((self.combined_output > self.thresh) != (self.combined_label > self.thresh)))
             print("Cerr for im " + str(self.im_num) + " = " + str(cerr))
 
-
-            self.cumulative_im_cerr = 0
             self.im_num = current_im_num
             self.combined_output = np.zeros((self.image_dim[1], self.image_dim[0]))
             self.combined_label = np.zeros((self.image_dim[1], self.image_dim[0]))
