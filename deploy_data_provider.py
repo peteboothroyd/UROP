@@ -62,7 +62,8 @@ class DeployDataLayer(caffe.Layer):
             try:
                 impath = self.im_files[r]
                 self.image_height, self.image_width, _ = IO.find_partition_dim(impath)
-            except:
+            except Exception as e:
+                print(e)
                 print("Problem loading image with path: " + impath)
             else:
                 break
