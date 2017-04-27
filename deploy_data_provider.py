@@ -92,8 +92,9 @@ class DeployDataLayer(caffe.Layer):
                         im = imio.imread(impath)
                         label = imio.imread(labelpath).astype(np.int32)
                         image_num = int(self.test_sample / self.num_partitions_per_image)
-                        imio.imsave("./output/deploy_output/target_image{}.png".format(image_num), im)
-                        imio.imsave("./output/deploy_output/target_label{}.png".format(image_num), label)
+                        if image_num <= 1:
+                            imio.imsave("./output/deploy_output/target_image{}.png".format(image_num), im)
+                            imio.imsave("./output/deploy_output/target_label{}.png".format(image_num), label)
                     except Exception as e:
                         print(e)
                         print("Deploy Forward: IOError.")
