@@ -64,7 +64,7 @@ class DeployOutputLayer(caffe.Layer):
             imio.imsave(combined_label_path, self.combined_label)
 
             cerr = np.sum(((self.combined_output > self.thresh) != (self.combined_label > self.thresh)))
-            print("Cerr for im " + str(self.im_num) + " = " + str(cerr))
+            print("Cerr for merged im " + str(self.im_num) + " = " + str(cerr))
 
             self.im_num = current_im_num
             self.combined_output = np.zeros((self.image_dim[1], self.image_dim[0]))
@@ -84,8 +84,8 @@ class DeployOutputLayer(caffe.Layer):
         for x in range(self.width):
             for y in range(self.height):
                 output_label_val = self.element_function(self.weights[y][x]) * prob[0][0][y][x]
-                print("output label val = " + str(output_label_val))
-                print("normalising array[y + y_off][x + x_off] = " + str(self.normalising_array[y + y_off][x + x_off]))
+                #print("output label val = " + str(output_label_val))
+                #print("normalising array[y + y_off][x + x_off] = " + str(self.normalising_array[y + y_off][x + x_off]))
                 output_label_normalised = output_label_val / self.normalising_array[y + y_off][x + x_off]
                 self.combined_output[y + y_off][x + x_off] += output_label_normalised
                 self.combined_label[y + y_off][x + x_off] = label[0][0][y][x]
@@ -134,7 +134,7 @@ class DeployOutputLayer(caffe.Layer):
 
         """
         normalising_weights = np.zeros((self.image_dim[1], self.image_dim[0]))
-        print(normalising_weights.shape)
+        #print(normalising_weights.shape)
 
         for i in range(len(self.im_coords)):
             image_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
@@ -147,7 +147,7 @@ class DeployOutputLayer(caffe.Layer):
                 for y in range(self.height):
                     normalising_weights[y + y_off][x + x_off] += self.element_function(weights[y][x])
 
-        print("normalising array = " + str(normalising_weights))
+        #print("normalising array = " + str(normalising_weights))
         return normalising_weights
 
     def element_function(self, val):
