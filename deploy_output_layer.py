@@ -81,6 +81,8 @@ class DeployOutputLayer(caffe.Layer):
         for x in range(self.image_dim[0]):
             for y in range(self.image_dim[1]):
                 output_label_val = self.element_function(self.weights[y][x]) * prob[y][x]
+                print("output label val = " + str(output_label_val))
+                print("normalising array[y + y_off][x + x_off]" + str(self.normalising_array[y + y_off][x + x_off]))
                 output_label_normalised = output_label_val / self.normalising_array[y + y_off][x + x_off]
                 self.combined_output[y + y_off][x + x_off] += output_label_normalised
                 self.combined_label[y + y_off][x + x_off] = label[y][x]
@@ -142,6 +144,7 @@ class DeployOutputLayer(caffe.Layer):
                 for y in range(self.height):
                     normalising_weights[y + y_off][x + x_off] += self.element_function(weights[y][x])
 
+        print("normalising array = " + str(normalising_weights))
         return normalising_weights
 
     def element_function(self, val):
