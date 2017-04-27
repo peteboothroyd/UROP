@@ -22,7 +22,6 @@ class combine(object):
 
         upConvolve = UpConvolve(self.stride, self.kernel_size, [partition_width, partition_height], self.image_dim, self.num_conv_levels)
         self.weights = upConvolve.generate_weights()
-
         self.normalising_array = self.calc_normalising_array(self.weights)
 
     def calc_normalising_array(self, weights):

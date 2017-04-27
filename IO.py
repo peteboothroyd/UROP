@@ -11,12 +11,16 @@ def read_info_file(path):
 
     Returns:
         num_partitions_per_image (int): The number of partitions per overall image
-        image_dim [(int), (int)]:       The dimensions of the overall image
-        output_im_files [[(str)]]:      A list of lists of strings, with the paths to the images saved by the data provider layer
+        image_dim [(int), (int)]:       The dimensions of the overall image [x_size, y_size]
+        im_coords [[(str)]]:            A list of strings, with the offsets of the various partitions
+        stride [(int), (int)]:          The stride size of the convolution [x_size, y_size]
+        kernel_size [(int), (int)]:     The kernel size of the convolution [x_size, y_size]
+        n_conv_levels [int]:            The number of convolution levels
 
     """
     try:
         #Parsing info file for useful data.
+        print("Reading info file...")
         info_file = open(path, "r")
 
         num_partitions_line_raw = info_file.readline()
@@ -29,17 +33,37 @@ def read_info_file(path):
         r = re.findall(image_size_pattern, image_size_line_raw)
         image_dim = [int(r[0][0]), int(r[0][1])]
 
-        im_coords = [f.split() for f in info_file.readlines()]
+        stride_size_line_raw = info_file.readline()
+        stride_size_pattern = r"Stride = \[(?P<stride_size_x>\d+), (?P<stride_size_y>\d+)\]"
+        r = re.findall(stride_size_pattern, stride_size_line_raw)
+        stride = [int(r[0][0]), int(r[0][1])]
+
+        kernel_size_line_raw = info_file.readline()
+        kernel_size_pattern = r"Kernel size = \[(?P<kernel_size_x>\d+), (?P<kernel_size_y>\d+)\]"
+        r = re.findall(kernel_size_pattern, kernel_size_line_raw)
+        kernel_size = [int(r[0][0]), int(r[0][1])]
+
+        n_conv_levels_line_raw = info_file.readline()
+        n_conv_levels_pattern = r"Kernel size = \[(?P<kernel_size_x>\d+), (?P<kernel_size_y>\d+)\]"
+        r = re.findall(n_conv_levels_pattern, n_conv_levels_line_raw)
+        n_conv_levels = [int(r[0][0]), int(r[0][1])]
+
+        im_coords = info_file.readline().split()
         info_file.close()
 
-        print("number of partitions per image = " + str(num_partitions_per_image) + str(type(num_partitions_per_image)))
+        #print("number of partitions per image = " + str(num_partitions_per_image) + str(type(num_partitions_per_image)))
+        print("image size = " + str(image_dim))
+        print("image coords = " + str(im_coords) + ". length = " + str(len(im_coords)))
+        print("stride size = " + str(stride))
+        print("kernel size = " + str(kernel_size))
+        print("number convolutional levels = " + str(n_conv_levels))
 
-        return num_partitions_per_image, image_dim, im_coords
+        return num_partitions_per_image, image_dim, im_coords, stride, kernel_size, n_conv_levels
 
     except IOError:
         print("Could not open info file. Check that it has been created at the path= " + path)
 
-def create_info_file(path, num_partitions, image_dim):
+def create_info_file(path, num_partitions, image_dim, stride, kernel_size, num_conv_levels):
     """
     Store relevant information which can be used later in the output layer.
 
@@ -52,12 +76,15 @@ def create_info_file(path, num_partitions, image_dim):
         info_file = open(path, "w+")
         info_file.write("Number of partitions per image = " + str(num_partitions) + "\n")
         info_file.write("Image size = " + str(image_dim))
+        info_file.write("Stride = " + str(stride))
+        info_file.write("Kernel size = " + str(kernel_size))
+        info_file.write("Convolution levels = " + str(num_conv_levels))
         info_file.close()
 
         print("Created image file at path: " + path)
     except:
         print("Problem loading info file with path: " + path)
-
+'''
 def find_partition_dim(path):
     try:
         #print("im_files[0] = " + str(self.im_files[0]))
@@ -69,3 +96,4 @@ def find_partition_dim(path):
         return im.shape
     except:
         print("Problem loading image with path: " + path)
+'''
