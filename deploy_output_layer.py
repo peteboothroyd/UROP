@@ -113,7 +113,7 @@ class DeployOutputLayer(caffe.Layer):
         parsed_info = IO.read_info_file(self.info_file_path)
 
         self.num_partitions_per_image, self.image_dim, self.im_coords = parsed_info[0], parsed_info[1], parsed_info[2]
-        self.stride, self.Kernel_size, self.n_conv_levels = parsed_info[3], parsed_info[4], parsed_info[5]
+        self.stride, self.kernel_size, self.n_conv_levels = parsed_info[3], parsed_info[4], parsed_info[5]
         self.opened_info_file = True
         upConvolve = UpConvolve(self.stride, self.kernel_size, [self.width, self.height], self.image_dim, self.num_conv_levels)
         self.weights = upConvolve.generate_weights()
