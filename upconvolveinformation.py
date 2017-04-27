@@ -182,11 +182,11 @@ class UpConvolve(object):
         self.write_to_im(intensities, "intensities.png")
         """
         im = self.generate_weights()
-        filename = "intensities" + str(self.partition_size_x) + "x" + str(self.partition_size_y) + ".png"
+        filename = "intensities_x{0}_y{1}.png".format(self.partition_size_x, self.partition_size_y)
         self.write_to_im(im, filename)
 
 if __name__=="__main__":
-    upconv = UpConvolve([2,2],[4,4],[94,94], [576, 768], 5)
+    upconv = UpConvolve([2,2],[4,4],[254,254], [576, 768], 5)
     upconv.test()
     upconv.partition()
 
