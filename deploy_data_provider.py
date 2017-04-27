@@ -75,7 +75,7 @@ class DeployDataLayer(caffe.Layer):
         IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels)
 
         print("Set up DeployDataLayer.")
-        print("image shape = " + str([self.image_width, self.image_height]))
+        #print("image shape = " + str([self.image_width, self.image_height]))
 
     def reshape(self, bottom, top):
         top[0].reshape(self.batch_size, self.channels, self.partition_height, self.partition_width)
