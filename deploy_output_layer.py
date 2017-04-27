@@ -56,6 +56,9 @@ class DeployOutputLayer(caffe.Layer):
         partition_num = self.test_sample - current_im_num * self.num_partitions_per_image
         print("Image number = " + str(current_im_num) + ". Current partition number = " + str(partition_num))
 
+        #TODO: Delete this
+        assert current_im_num <= 0, "1 test image processed..."
+
         if current_im_num > self.im_num: #Have just transitioned to be looking at the next overall image, save
             combined_output_path = self.output_path + "{0}_combined_output.png".format(self.im_num)
             combined_label_path = self.output_path + "{0}_combined_label.png".format(self.im_num)
@@ -90,7 +93,13 @@ class DeployOutputLayer(caffe.Layer):
         x_off, y_off = int(r[0][0]), int(r[0][1])
         #print("prob dim = " + str(prob.shape))
         #print("weights dim = " + str(self.weights.shape))
-        #print("lable dim = " + str(label.shape))
+        #print("label dim = " + str(label.shape))
+
+        prob_to_save = np.zeros((self.height, self.width, 3), dtype=np.float32)
+        output_to_save[:,:,0] = prob_to_save
+        output_to_save[:,:,1] = prob_to_save
+        output_to_save[:,:,2] = prob_to_save
+        imio.imsave(self.output_path + "{0}_output_x{1}_y{2}.png".format(current_im_num, x_off, y_off), prob_to_save)
 
         for x in range(self.width):
             for y in range(self.height):
