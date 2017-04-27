@@ -19,7 +19,6 @@ class DeployDataLayer(caffe.Layer):
 
         random.seed()
 
-        #TODO: Check that this path is correct relative to the directory where the code is called from
         self.output_path = "./output/deploy_output/"
         self.info_file_path = self.output_path + "info.txt"
 
@@ -28,8 +27,7 @@ class DeployDataLayer(caffe.Layer):
         self.stride = [2, 2]
         self.kernel_size = [4, 4]
 
-        #This is the number of up/down convolve layers in the architecture which determines the image dimensions
-        self.num_conv_levels = 5
+        self.num_conv_levels = 5 #This is the number of up/down convolve layers in the architecture which determines the image dimensions
 
         params = json.loads(self.param_str)
 
@@ -54,8 +52,7 @@ class DeployDataLayer(caffe.Layer):
 
         self.n_files = len(self.im_files)
 
-        if self.n_files != len(self.gt_files):
-            raise ValueError('Number of images and labels differ!')
+        assert self.n_files == len(self.gt_files), 'Number of images and labels differ!'
 
         while True:
             r = random.randrange(0, self.n_files)
@@ -75,7 +72,7 @@ class DeployDataLayer(caffe.Layer):
         IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels)
 
         print("Set up DeployDataLayer.")
-        print("image shape = " + str([self.image_width, self.image_height]))
+        print("image shape(height, width) = " + str([self.image_height, self.image_width]))
 
     def reshape(self, bottom, top):
         top[0].reshape(self.batch_size, self.channels, self.partition_height, self.partition_width)

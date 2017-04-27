@@ -74,8 +74,8 @@ class DeployOutputLayer(caffe.Layer):
         label = bottom[1].data
 
         im_coords = self.im_coords[partition_num]
-        image_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+).png"
-        r = re.findall(image_pattern, im_coords)
+        coord_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
+        r = re.findall(coord_pattern, im_coords)
         x_off, y_off = r[0][0], r[0][1]
 
         for x in range(self.image_dim[0]):
@@ -91,9 +91,6 @@ class DeployOutputLayer(caffe.Layer):
         # Classification error.
         cerr = np.sum(self.cerr)
         top[0].data[...] = cerr
-
-        #label_path = self.output_path + "{0}_output_x{1}_y{2}.png".format(image_num, x_off, y_off)
-        #imio.imsave(label_path, to_save)
 
         self.test_sample += 1
 
