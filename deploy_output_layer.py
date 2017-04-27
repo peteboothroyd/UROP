@@ -77,12 +77,14 @@ class DeployOutputLayer(caffe.Layer):
         coord_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
         r = re.findall(coord_pattern, im_coords)
         x_off, y_off = int(r[0][0]), int(r[0][1])
+        print("prob dim = " + str(prob.shape))
+        print("weights dim = " + str(self.weights.shape))
 
         for x in range(self.image_dim[0]):
             for y in range(self.image_dim[1]):
                 output_label_val = self.element_function(self.weights[y][x]) * prob[y][x]
                 print("output label val = " + str(output_label_val))
-                print("normalising array[y + y_off][x + x_off]" + str(self.normalising_array[y + y_off][x + x_off]))
+                print("normalising array[y + y_off][x + x_off] = " + str(self.normalising_array[y + y_off][x + x_off]))
                 output_label_normalised = output_label_val / self.normalising_array[y + y_off][x + x_off]
                 self.combined_output[y + y_off][x + x_off] += output_label_normalised
                 self.combined_label[y + y_off][x + x_off] = label[y][x]
