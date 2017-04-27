@@ -44,9 +44,9 @@ def read_info_file(path):
         kernel_size = [int(r[0][0]), int(r[0][1])]
 
         n_conv_levels_line_raw = info_file.readline()
-        n_conv_levels_pattern = r"Convolution levels = \[(?P<n_conv_levels>\d+)"
+        n_conv_levels_pattern = r"Convolution levels = (?P<n_conv_levels>\d+)"
         r = re.findall(n_conv_levels_pattern, n_conv_levels_line_raw)
-        n_conv_levels = int(r[0][0])
+        n_conv_levels = int(r[0])
 
         im_coords = info_file.readline().split()
         info_file.close()
