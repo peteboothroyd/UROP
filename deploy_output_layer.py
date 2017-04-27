@@ -137,12 +137,12 @@ class DeployOutputLayer(caffe.Layer):
         for i in range(len(self.im_coords)):
             image_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
             r = re.findall(image_pattern, self.im_coords[i])
-            print("normalising r = " + str(r[0]))
+            #print("normalising r = " + str(r[0]))
             x_off, y_off = int(r[0][0]), int(r[0][1])
             #Need to add numpy array to a smaller numpy array, with an offset given by the x_of and y_off. Note we want to apply some
             #function to each pixel, we do no necessarily think that this relationship is linear
-            for x in range(self.image_dim[0] - 1):
-                for y in range(self.image_dim[1] - 1):
+            for x in range(self.width):
+                for y in range(self.height):
                     normalising_weights[y + y_off][x + x_off] += self.element_function(weights[y][x])
 
         return normalising_weights
