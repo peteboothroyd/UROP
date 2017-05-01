@@ -112,7 +112,7 @@ class DeployDataLayer(caffe.Layer):
 
             top[0].data[i, ...] = cropped_im
             top[1].data[i, ...] = cropped_label
-            top[1].data[i, ...] = offset
+            top[2].data[i, ...] = offset
             self.test_sample += 1
 
             ##DEBUG##
