@@ -14,20 +14,18 @@ join = os.path.join
 
 class DeployDataLayer(caffe.Layer):
     def setup(self, bottom, top):
-        if len(top) != 2:
-            raise ValueError('DataLayer should have 2 outputs for deployment. Image and label data.')
+        if len(top) != 3:
+            raise ValueError('DataLayer should have 3 outputs for deployment (image, label, offset)')
 
         random.seed()
 
         self.output_path = "./output/deploy_output/"
-        self.info_file_path = self.output_path + "info.txt"
 
         # NOTE(fixme, dirty)
         self.channels = 3
         self.stride = [2, 2]
         self.kernel_size = [4, 4]
-
-        self.num_conv_levels = 5 #This is the number of up/down convolve layers in the architecture which determines the image dimensions
+        self.num_conv_levels = 5 #This is the number of up/down convolve layers in the architecture which determines the partition dimensions
 
         params = json.loads(self.param_str)
 
@@ -69,7 +67,7 @@ class DeployDataLayer(caffe.Layer):
         self.partition_indices = self.upConv.partition()
         self.num_partitions_per_image = len(self.partition_indices)
 
-        IO.create_info_file(self.info_file_path, len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels, self.partition_indices)
+        IO.create_info_file(self.output_path + "info.txt", len(self.partition_indices), [self.image_width, self.image_height], self.stride, self.kernel_size, self.num_conv_levels, self.partition_indices)
 
         print("Set up DeployDataLayer.")
         print("image shape(height, width) = " + str([self.image_height, self.image_width]))
@@ -82,44 +80,43 @@ class DeployDataLayer(caffe.Layer):
         top[0].data[...] = 0
         top[1].data[...] = 0
 
-        for i in range(self.batch_size):
+        for i in range(self.batch_size): #Batch size should equal the number of partitions which we are splitting the image up into
             while True:
-                while True:
-                    r = random.randrange(0, self.n_files)
-                    try:
-                        impath = self.im_files[r]
-                        labelpath = self.gt_files[r]
-                        im = imio.imread(impath)
-                        label = imio.imread(labelpath).astype(np.int32)
-                        image_num = int(self.test_sample / self.num_partitions_per_image)
-                        if image_num <= 1:
-                            imio.imsave("./output/deploy_output/target_image{}.png".format(image_num), im)
-                            imio.imsave("./output/deploy_output/target_label{}.png".format(image_num), label)
-                    except Exception as e:
-                        print(e)
-                        print("Deploy Forward: IOError.")
-                    else:
-                        break
+                r = random.randrange(0, self.n_files)
+                try:
+                    impath = self.im_files[r]
+                    labelpath = self.gt_files[r]
+                    im = imio.imread(impath)
+                    label = imio.imread(labelpath).astype(np.int32)
+                    image_num = int(self.test_sample / self.num_partitions_per_image)
+                    if image_num <= 1:
+                        imio.imsave("./output/deploy_output/target_image{}.png".format(image_num), im)
+                        imio.imsave("./output/deploy_output/target_label{}.png".format(image_num), label)
+                except Exception as e:
+                    print(e)
+                    print("Deploy Forward: IOError.")
+                else:
+                    break
 
-                for j in range(len(self.partition_indices)):
-                    startx, stopx = self.partition_indices[j][0][0], self.partition_indices[j][0][1]
-                    starty, stopy = self.partition_indices[j][1][0], self.partition_indices[j][1][1]
+            startx, stopx = self.partition_indices[i][0][0], self.partition_indices[i][0][1]
+            starty, stopy = self.partition_indices[i][1][0], self.partition_indices[i][1][1]
+            offset = np.array(startx, starty)
 
-                    cropped_im = im[starty:stopy, startx:stopx, :]
-                    cropped_label = label[starty:stopy, startx:stopx, :]
+            cropped_im = im[starty:stopy, startx:stopx, :]
+            cropped_label = label[starty:stopy, startx:stopx, :]
 
-                    if image_num <= 0:
-                        output_cropped_im_path = self.output_path + "{0}_x{1}_y{2}_image.png".format(image_num, startx, starty)
-                        output_cropped_label_path = self.output_path + "{0}_x{1}_y{2}_label.png".format(image_num, startx, starty)
-                        imio.imsave(output_cropped_im_path, cropped_im)
-                        imio.imsave(output_cropped_label_path, cropped_label)
+            cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
+            cropped_label = np.sum(cropped_label, axis=2)
+            cropped_label[cropped_label != 0] = 1
 
-                    cropped_im = cropped_im.transpose(2, 0, 1).astype(np.float32)
-                    cropped_label = np.sum(cropped_label, axis=2)
-                    cropped_label[cropped_label != 0] = 1
+            top[0].data[i, ...] = cropped_im
+            top[1].data[i, ...] = cropped_label
+            top[1].data[i, ...] = offset
+            self.test_sample += 1
 
-                    top[0].data[i, ...] = cropped_im
-                    top[1].data[i, ...] = cropped_label
-                    self.test_sample += 1
-
-                break
+            ##DEBUG##
+            output_cropped_im_path = self.output_path + "{0}_x{1}_y{2}_image.png".format(image_num, startx, starty)
+            output_cropped_label_path = self.output_path + "{0}_x{1}_y{2}_label.png".format(image_num, startx, starty)
+            imio.imsave(output_cropped_im_path, cropped_im)
+            imio.imsave(output_cropped_label_path, cropped_label)
+            ##DEBUG##

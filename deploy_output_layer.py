@@ -12,8 +12,8 @@ class DeployOutputLayer(caffe.Layer):
 
     def setup(self, bottom, top):
         # Check inputs.
-        if len(bottom) != 2:
-            raise Exception("Need two inputs (propagated, label)")
+        if len(bottom) != 3:
+            raise Exception("Need 3 inputs (propagated, label, offset)")
 
         # Params is a python dictionary with layer parameters.
         if not self.param_str:
@@ -21,8 +21,7 @@ class DeployOutputLayer(caffe.Layer):
         else:
             params = eval(self.param_str)
 
-        # Loss weight
-        self.loss_weight = params.get('loss_weight', 1.0)
+
         # Threshold for computing classification error
         self.thresh = 0.5
         self.width = params['width']
@@ -32,7 +31,6 @@ class DeployOutputLayer(caffe.Layer):
         self.im_num = 0
 
         self.output_path = "./output/deploy_output/"
-        self.info_file_path = self.output_path + "info.txt"
 
         print("Set up DeployOutputLayer: ")
 
@@ -53,7 +51,7 @@ class DeployOutputLayer(caffe.Layer):
             self.combined_label = np.zeros((self.image_dim[1], self.image_dim[0]))
 
         current_im_num = int(self.test_sample / self.num_partitions_per_image)
-        partition_num = self.test_sample - current_im_num * self.num_partitions_per_image
+        #partition_num = self.test_sample - current_im_num * self.num_partitions_per_image
         print("Image number = " + str(current_im_num) + ". Current partition number = " + str(partition_num))
 
         if current_im_num > self.im_num: #Have just transitioned to be looking at the next overall image, save
@@ -61,7 +59,6 @@ class DeployOutputLayer(caffe.Layer):
             combined_label_path = self.output_path + "{0}_combined_label.png".format(self.im_num)
 
             output_to_save = np.zeros((self.image_dim[1], self.image_dim[0], 3), dtype=np.float32)
-            print(output_to_save.shape)
             output_to_save[:,:,0] = self.combined_output
             output_to_save[:,:,1] = self.combined_output
             output_to_save[:,:,2] = self.combined_output
@@ -86,20 +83,22 @@ class DeployOutputLayer(caffe.Layer):
 
         prob = self.sigmoid(bottom[0].data)
         label = bottom[1].data
+        offset = bottom[2].data
 
+        '''
         im_coords = self.im_coords[partition_num]
         coord_pattern = r"x(?P<x_offset>\d+)_y(?P<y_offset>\d+)"
         r = re.findall(coord_pattern, im_coords)
         x_off, y_off = int(r[0][0]), int(r[0][1])
-        #print("prob dim = " + str(prob.shape))
-        #print("weights dim = " + str(self.weights.shape))
-        #print("label dim = " + str(label.shape))
+        '''
+        x_off, y_off = offset[0], offset[1]
 
         prob_to_save = np.zeros((self.height, self.width, 3), dtype=np.float32)
         prob_to_save[:,:,0] = prob
         prob_to_save[:,:,1] = prob
         prob_to_save[:,:,2] = prob
         imio.imsave(self.output_path + "{0}_x{1}_y{2}_output.png".format(current_im_num, x_off, y_off), prob_to_save)
+        
         label_to_save = np.zeros((self.height, self.width, 3), dtype=np.float32)
         label_to_save[:,:,0] = label
         label_to_save[:,:,1] = label
@@ -136,7 +135,7 @@ class DeployOutputLayer(caffe.Layer):
         return ret
 
     def read_from_info_file(self):
-        parsed_info = IO.read_info_file(self.info_file_path)
+        parsed_info = IO.read_info_file(self.output_path + "info.txt")
 
         self.num_partitions_per_image, self.image_dim, self.im_coords = parsed_info[0], parsed_info[1], parsed_info[2]
         self.stride, self.kernel_size, self.num_conv_levels = parsed_info[3], parsed_info[4], parsed_info[5]
