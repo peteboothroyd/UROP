@@ -100,7 +100,7 @@ class DeployDataLayer(caffe.Layer):
 
             startx, stopx = self.partition_indices[i][0][0], self.partition_indices[i][0][1]
             starty, stopy = self.partition_indices[i][1][0], self.partition_indices[i][1][1]
-            offset = np.array(startx, starty)
+            offset = np.array([startx, starty])
 
             cropped_im = im[starty:stopy, startx:stopx, :]
             cropped_label = label[starty:stopy, startx:stopx, :]
