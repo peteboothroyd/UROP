@@ -75,6 +75,7 @@ class DeployDataLayer(caffe.Layer):
     def reshape(self, bottom, top):
         top[0].reshape(self.batch_size, self.channels, self.partition_height, self.partition_width)
         top[1].reshape(self.batch_size, 1, self.partition_height, self.partition_width)
+        top[2].reshape(self.batch_size, 2)
 
     def forward(self, bottom, top):
         top[0].data[...] = 0
