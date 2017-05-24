@@ -1,3 +1,3 @@
 This folder contains the modified code from the 'Fully Convolutional Networks for Semantic Segmentation' paper for comparison to the JKNet architecture. Currently this has been written to run on the persephone machine but is untested.
-\n To run the train use 'python solve.py *' where * is a free GPU id.
-\n The model also requires 'VGG_ILSVRC_16_layers.caffemodel' and ' VGG_ILSVRC_16_layers_deploy.prototxt' to be located in a folder '../ilsvrc-nets/' relative to the solve.py file. This conforms to the original code from the paper, and the relevant files can be found at https://gist.github.com/ksimonyan/211839e770f7b538e2d8#file-readme-md.
+- To run the train use 'python solve.py *' where * is a free GPU id.
+- The model also requires 'VGG_ILSVRC_16_layers.caffemodel' and ' VGG_ILSVRC_16_layers_deploy.prototxt' to be located in a folder '../ilsvrc-nets/' relative to the solve.py file. This conforms to the original code from the paper, and the relevant files can be found [here](https://gist.github.com/ksimonyan/211839e770f7b538e2d8#file-readme-md).
